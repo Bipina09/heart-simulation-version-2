@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Human Heart Simulation</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <div class="loader-inner">
+    <div class="heartbeat-icon">❤</div>
+    <h2>Loading Heart Simulation</h2>
+    <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
+    <p id="loader-text">Initialising 3D engine...</p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <span class="heart-icon">❤</span>
+      <div>
+        <h1>Human Heart Simulation</h1>
+        <p>Interactive 3D Learning Tool · Grades 6–12</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="btn-labels" class="hdr-btn active" title="Toggle Labels">🏷 Labels</button>
+      <button id="btn-xray" class="hdr-btn" title="X-Ray View">🔬 X-Ray</button>
+      <button id="btn-reset" class="hdr-btn" title="Reset View">↺ Reset</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+
+    <!-- LEFT PANEL: Controls -->
+    <aside class="left-panel">
+      <div class="panel-section">
+        <h3>🫀 Heart Speed</h3>
+        <p class="panel-hint">Adjust how fast the heart beats</p>
+        <div class="slider-row">
+          <span>Slow</span>
+          <input type="range" id="bpm-slider" min="40" max="180" value="75" />
+          <span>Fast</span>
+        </div>
+        <div class="bpm-display"><span id="bpm-val">75</span> <small>BPM</small></div>
+        <div class="bpm-label" id="bpm-label">Normal Resting Heart Rate</div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🔍 View Mode</h3>
+        <div class="view-btns">
+          <button class="view-btn active" data-view="full">Full Heart</button>
+          <button class="view-btn" data-view="cross">Cross-Section</button>
+          <button class="view-btn" data-view="chambers">Chambers</button>
+          <button class="view-btn" data-view="valves">Valves</button>
+          <button class="view-btn" data-view="vessels">Blood Vessels</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>💡 Show / Hide</h3>
+        <label class="toggle-row"><input type="checkbox" id="tog-blood" checked/><span>Blood Flow Animation</span></label>
+        <label class="toggle-row"><input type="checkbox" id="tog-beat" checked/><span>Heartbeat Animation</span></label>
+        <label class="toggle-row"><input type="checkbox" id="tog-arteries" checked/><span>Arteries (Red)</span></label>
+        <label class="toggle-row"><input type="checkbox" id="tog-veins" checked/><span>Veins (Blue)</span></label>
+        <label class="toggle-row"><input type="checkbox" id="tog-coronary" checked/><span>Coronary Arteries</span></label>
+      </div>
+
+      <div class="panel-section">
+        <h3>📊 Live Stats</h3>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-val" id="stat-bpm">75</div><div class="stat-lbl">BPM</div></div>
+          <div class="stat-card"><div class="stat-val" id="stat-output">5.2</div><div class="stat-lbl">L/min output</div></div>
+          <div class="stat-card"><div class="stat-val" id="stat-beats">0</div><div class="stat-lbl">Beats today*</div></div>
+          <div class="stat-card"><div class="stat-val" id="stat-phase">Systole</div><div class="stat-lbl">Current phase</div></div>
+        </div>
+        <p class="tiny">*estimated at resting rate</p>
+      </div>
+    </aside>
+
+    <!-- CENTRE: 3D Canvas -->
+    <main class="canvas-area">
+      <canvas id="heart-canvas"></canvas>
+
+      <!-- Phase display -->
+      <div class="phase-overlay" id="phase-overlay">
+        <div class="phase-name" id="phase-name">Diastole</div>
+        <div class="phase-desc" id="phase-desc">Heart relaxes & fills with blood</div>
+      </div>
+
+      <!-- Drag hint -->
+      <div class="drag-hint" id="drag-hint">🖐 Drag to rotate · Pinch or scroll to zoom</div>
+
+      <!-- Blood flow legend -->
+      <div class="flow-legend">
+        <div class="legend-item"><span class="dot red"></span>Oxygen-rich blood (arteries)</div>
+        <div class="legend-item"><span class="dot blue"></span>Oxygen-poor blood (veins)</div>
+        <div class="legend-item"><span class="dot yellow"></span>Coronary arteries (heart's own supply)</div>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL: Info -->
+    <aside class="right-panel">
+      <div class="panel-section">
+        <h3>🫀 Click a Part</h3>
+        <p class="panel-hint">Click any part of the heart to learn about it</p>
+        <div id="info-box" class="info-box">
+          <div class="info-icon">❤</div>
+          <h4 id="info-title">The Human Heart</h4>
+          <p id="info-text">The heart is a powerful muscle about the size of your fist. It beats around 100,000 times a day, pumping blood to every part of your body. Click any part of the 3D heart to learn more!</p>
+          <div class="info-badge" id="info-badge" style="display:none"></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>🔄 Blood Flow Journey</h3>
+        <div class="journey-steps" id="journey-steps">
+          <div class="journey-step active" data-step="0">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <strong>Body returns blood</strong>
+              <p>Oxygen-poor (used) blood flows back from the body through two large veins called the <em>Superior & Inferior Vena Cava</em></p>
+            </div>
+          </div>
+          <div class="journey-step" data-step="1">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <strong>Right Atrium fills</strong>
+              <p>Blood enters the upper-right chamber. The <em>Tricuspid Valve</em> then opens to let it through</p>
+            </div>
+          </div>
+          <div class="journey-step" data-step="2">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <strong>Right Ventricle pumps</strong>
+              <p>The lower-right chamber squeezes blood through the <em>Pulmonary Valve</em> to the lungs</p>
+            </div>
+          </div>
+          <div class="journey-step" data-step="3">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <strong>Lungs add oxygen</strong>
+              <p>Blood picks up fresh oxygen and drops off carbon dioxide. It turns bright red!</p>
+            </div>
+          </div>
+          <div class="journey-step" data-step="4">
+            <div class="step-num">5</div>
+            <div class="step-content">
+              <strong>Left Atrium receives</strong>
+              <p>Oxygen-rich blood returns via <em>Pulmonary Veins</em>. The <em>Mitral Valve</em> lets it into the left ventricle</p>
+            </div>
+          </div>
+          <div class="journey-step" data-step="5">
+            <div class="step-num">6</div>
+            <div class="step-content">
+              <strong>Left Ventricle — main pump</strong>
+              <p>The strongest chamber! Squeezes hard to push blood through the <em>Aortic Valve</em> into the <em>Aorta</em> (the body's biggest artery)</p>
+            </div>
+          </div>
+          <div class="journey-step" data-step="6">
+            <div class="step-num">7</div>
+            <div class="step-content">
+              <strong>Blood reaches the body</strong>
+              <p>Fresh oxygen-rich blood is delivered to muscles, organs, and your brain. The cycle repeats!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>📚 Quick Facts</h3>
+        <div class="fact-cards" id="fact-cards">
+          <div class="fact">❤ The heart beats ~100,000 times every day</div>
+          <div class="fact">🩸 It pumps about 5 litres of blood per minute</div>
+          <div class="fact">💪 The left ventricle wall is 3× thicker than the right</div>
+          <div class="fact">⚡ Each heartbeat is triggered by an electrical signal</div>
+          <div class="fact">🫁 Blood takes ~60 seconds to complete one full circuit</div>
+          <div class="fact">🏃 During exercise, output can jump to 25 L/min!</div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- GLOSSARY -->
+  <div class="glossary-bar">
+    <span class="glos-label">📖 Glossary:</span>
+    <div class="glos-terms">
+      <span class="glos-term" data-def="The upper chambers of the heart that receive blood">Atria</span>
+      <span class="glos-term" data-def="The lower, muscular pumping chambers of the heart">Ventricles</span>
+      <span class="glos-term" data-def="Flap-like doors that keep blood flowing in one direction only">Valves</span>
+      <span class="glos-term" data-def="Blood vessels that carry blood AWAY from the heart">Arteries</span>
+      <span class="glos-term" data-def="Blood vessels that carry blood BACK to the heart">Veins</span>
+      <span class="glos-term" data-def="The largest artery in the body — carries blood from the heart to everything">Aorta</span>
+      <span class="glos-term" data-def="The contraction (squeeze) phase when the heart pumps blood out">Systole</span>
+      <span class="glos-term" data-def="The relaxation phase when the heart fills with blood">Diastole</span>
+      <span class="glos-term" data-def="Arteries that supply the heart muscle itself with blood and oxygen">Coronary Arteries</span>
+      <span class="glos-term" data-def="The thin outer sac that protects and cushions the heart">Pericardium</span>
+    </div>
+    <div class="glos-tooltip" id="glos-tooltip"></div>
+  </div>
+
+</div>
+
+<!-- GLOSSARY POPUP -->
+<div class="glos-popup" id="glos-popup" style="display:none">
+  <div class="glos-popup-inner">
+    <button class="glos-close" id="glos-close">✕</button>
+    <h4 id="glos-popup-title"></h4>
+    <p id="glos-popup-def"></p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="heart.js"></script>
+</body>
+</html>
